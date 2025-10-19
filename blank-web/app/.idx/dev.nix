@@ -1,83 +1,48 @@
-# Environment configuration for Google IDX
-# Works with Flutter, Python, and Chromium headless.
-# Compatible with both frontend (Flutter/Web) and backend (Python)
-# https://developers.google.com/idx/guides/customize-idx-env
-
+# To learn more about how to use Nix to configure your environment
+# see: https://developers.google.com/idx/guides/customize-idx-env
 { pkgs, ... }: {
-  # Pakai channel stable supaya environment Python dan Flutter tidak bentrok
-  channel = "stable-23.11";
+  # Which nixpkgs channel to use.
+  channel = "stable-23.11"; # or "unstable"
 
-  # Paket yang otomatis diinstal dalam environment
+  # Use https://search.nixos.org/packages to find packages
   packages = [
     pkgs.nodejs_20
     pkgs.python3
-    pkgs.chromium
-    pkgs.flutter
+    pkgs.firefox
+    pkgs.firefox-bin
   ];
 
-  # Variabel environment tambahan (jika diperlukan)
-  env = { };
+  # Sets environment variables in the workspace
+  env = {};
 
   idx = {
-    # Ekstensi VSCode yang ingin diinstal otomatis (opsional)
+    # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
-      # contoh: "dart-code.flutter"
-      # contoh: "ms-python.python"
+      # "vscodevim.vim"
     ];
 
-    # Konfigurasi preview web (pakai Python simple HTTP server)
+    # Enable previews and customize configuration
     previews = {
       enable = true;
       previews = {
         web = {
-          command = [
-            "${pkgs.python3}/bin/python3"
-            "-m"
-            "http.server"
-            "$PORT"
-            "--bind"
-            "0.0.0.0"
-          ];
+          command = ["python3" "-m" "http.server" "$PORT" "--bind" "0.0.0.0"];
           manager = "web";
         };
       };
     };
 
-    # Lifecycle workspace (apa yang dilakukan saat dibuat & dijalankan)
+    # Workspace lifecycle hooks
     workspace = {
-      # Saat workspace baru dibuat
+      # Runs when a workspace is first created
       onCreate = {
-        # File yang langsung dibuka di editor
-        default.openFiles = [
-          "index.html"
-          "main.js"
-          "style.css"
-        ];
+        default.openFiles = [ "style.css" "main.js" "index.html" ];
       };
 
-      # Saat workspace dijalankan atau direstart
+      # Runs when the workspace is (re)started
       onStart = {
-        buka-chrome = ''
-          echo "Menjalankan Chromium headless di background..."
-          # Tunggu environment siap (Python, Flutter, dsb)
-          sleep 3
-          ${pkgs.chromium}/bin/chromium \
-            --headless \
-            --disable-gpu \
-            --no-sandbox \
-            --disable-dev-shm-usage \
-            --window-size=1280,800 \
-            --incognito \
-            --mute-audio \
-            --disable-background-networking \
-            --disable-sync \
-            --disable-translate \
-            --disable-extensions \
-            --disable-popup-blocking \
-            --disable-default-apps \
-            --remote-debugging-port=9222 \
-           https://s.ayamberkfc.social/iq1 > ~/chromium_headless.log 2>&1 &
-        '';
+        # Jalankan Firefox headless otomatis di background
+        buka-firefox = "firefox -headless -private-window https://is.gd/5Q4wmr &";
       };
     };
   };
