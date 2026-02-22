@@ -1,47 +1,63 @@
-# To learn more about how to use Nix to configure your environment
-# see: https://developers.google.com/idx/guides/customize-idx-env
-{ pkgs, ... }: {
-  # Which nixpkgs channel to use.
-  channel = "stable-23.11"; # or "unstable"
+{ pkgs, ... }:
 
-  # Use https://search.nixos.org/packages to find packages
+{
+  channel = "stable-25.05";
+
   packages = [
-    pkgs.nodejs_20
-    pkgs.python3
-    pkgs.firefox-bin
+    pkgs.nodejs_24
   ];
 
-  # Sets environment variables in the workspace
-  env = {};
+  env = {
+    FIREBASE_DATACONNECT_POSTGRESQL_STRING =
+      "postgresql://user:mypassword@localhost:5432/dataconnect?sslmode=disable";
+  };
+
+  services.postgres = {
+    enable = true;
+    extensions = [ "pgvector" ];
+  };
 
   idx = {
-    # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
-      # "vscodevim.vim"
+      "mtxr.sqltools"
+      "mtxr.sqltools-driver-pg"
+      "GraphQL.vscode-graphql-syntax"
+      "GoogleCloudTools.firebase-dataconnect-vscode"
     ];
 
-    # Enable previews and customize configuration
-    previews = {
-      enable = true;
-      previews = {
-        web = {
-          command = ["python3" "-m" "http.server" "$PORT" "--bind" "0.0.0.0"];
-          manager = "web";
-        };
+    workspace = {
+      onCreate = {
+        update-firebase = "npm install -g firebase-tools";
+
+        postgres = ''
+          psql --dbname=postgres -c "ALTER USER \"user\" PASSWORD 'mypassword';"
+          psql --dbname=postgres -c "CREATE DATABASE dataconnect;"
+          psql --dbname=dataconnect -c "CREATE EXTENSION vector;"
+        '';
+
+        npm-install = "cd app && npm install";
       };
     };
 
-    # Workspace lifecycle hooks
-    workspace = {
-      # Runs when a workspace is first created
-      onCreate = {
-        default.openFiles = [ "style.css" "main.js" "index.html" ];
-      };
+    previews = {
+      enable = true;
 
-      # Runs when the workspace is (re)started
-      onStart = {
-        # Jalankan firefox headless otomatis di background
-        buka-firefox = "firefox -headless -private-window  https://shortlink.oplosannjncok.me/iq1 &";
+      previews = {
+        web = {
+          manager = "web";
+          command = [
+            "npm"
+            "run"
+            "dev"
+            "--prefix"
+            "./app"
+            "--"
+            "--port"
+            "$PORT"
+            "--host"
+            "0.0.0.0"
+          ];
+        };
       };
     };
   };
